@@ -36,10 +36,11 @@ from vllm.model_executor.layers.activation import SiluAndMul
 from vllm.model_executor.layers.layernorm import RMSNorm
 from vllm.model_executor.layers.attention import PagedAttentionWithRoPE
 from vllm.model_executor.layers.sampler import Sampler
-from vllm.model_executor.layers.quantized_linear import ParallelLinear
 from vllm.model_executor.parallel_utils.parallel_state import (
     get_tensor_model_parallel_rank, get_tensor_model_parallel_world_size)
-from vllm.model_executor.parallel_utils.layers import VocabParallelEmbedding
+from vllm.model_executor.parallel_utils.layers import (VocabParallelEmbedding,
+                                                       ColumnParallelLinear, RowParallelLinear)
+from vllm.model_executor.layers.quantized_linear import ParallelLinear
 from vllm.model_executor.quantization_utils import QuantizationConfig
 from vllm.model_executor.weight_utils import (
     convert_pyslice_to_tensor, hf_model_weights_iterator,
@@ -349,6 +350,8 @@ class LlamaForCausalLM(nn.Module):
              q_proj_shard_size + kv_proj_shard_size),
         ]
         state_dict = self.state_dict()
+
+        load_format = load_format if load_format != "auto" else "pt"
 
         for name, loaded_weight in hf_model_weights_iterator(
                 model_name_or_path, cache_dir, load_format, revision):

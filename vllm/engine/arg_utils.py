@@ -132,7 +132,7 @@ class EngineArgs:
         parser.add_argument('--block-size',
                             type=int,
                             default=EngineArgs.block_size,
-                            choices=[8, 16, 32],
+                            choices=[1, 2, 4, 8, 16, 32, 64, 128, 256],
                             help='token block size')
         # TODO(woosuk): Support fine-grained seeds (e.g., seed per request).
         parser.add_argument('--seed',
@@ -168,7 +168,8 @@ class EngineArgs:
         parser.add_argument('--quantization',
                             '-q',
                             type=str,
-                            choices=['awq', 'squeezellm', None],
+                            # choices=['awq', 'squeezellm', None],
+                            choices=['squeezellm', None],
                             default=None,
                             help='Method used to quantize the weights')
         return parser

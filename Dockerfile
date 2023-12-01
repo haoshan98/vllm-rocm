@@ -1,72 +1,65 @@
-FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 AS dev
+FROM rocm/pytorch:rocm5.7_ubuntu22.04_py3.10_pytorch_2.0.1
 
-RUN apt-get update -y \
-    && apt-get install -y python3-pip
+# Install some basic utilities
+RUN apt-get update && apt-get install python3 python3-pip -y
 
-WORKDIR /workspace
+# Install some basic utilities
+RUN apt-get update && apt-get install -y \
+    curl \
+    ca-certificates \
+    sudo \
+    git \
+    bzip2 \
+    libx11-6 \
+    build-essential \
+    wget \
+    unzip \
+    nvidia-cuda-toolkit \
+    tmux \
+ && rm -rf /var/lib/apt/lists/*
 
-# install build and runtime dependencies
-COPY requirements.txt requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements.txt
-    
-# install development dependencies
-COPY requirements-dev.txt requirements-dev.txt
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements-dev.txt
+### Mount Point ###
+# When launching the container, mount the code directory to /app
+ARG APP_MOUNT=/app
+VOLUME [ ${APP_MOUNT} ]
+WORKDIR ${APP_MOUNT}
 
-# image to build pytorch extensions
-FROM dev AS build
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install --no-cache-dir fastapi ninja tokenizers
 
-# copy input files
-COPY csrc csrc
-COPY setup.py setup.py
-COPY requirements.txt requirements.txt
-COPY pyproject.toml pyproject.toml
-COPY vllm/__init__.py vllm/__init__.py
+ENV LLVM_SYMBOLIZER_PATH=/opt/rocm/llvm/bin/llvm-symbolizer
+ENV PATH=$PATH:/opt/rocm/bin:/libtorch/bin:
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib/:/libtorch/lib:
+ENV CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/libtorch/include:/libtorch/include/torch/csrc/api/include/:/opt/rocm/include/:
+ENV PYTORCH_ROCM_ARCH=gfx900;gfx906;gfx908;gfx90a;gfx1030;gfx1101
 
-# max jobs used by Ninja to build extensions
-ENV MAX_JOBS=$max_jobs 
-RUN python3 setup.py build_ext --inplace
+# Install ROCm flash-attention
+RUN mkdir libs \
+    && cd libs \
+    && git clone https://github.com/ROCmSoftwarePlatform/flash-attention.git \
+    && cd flash-attention \
+    && git checkout edc7698 \
+    && git submodule update --init \
+    && sed -i -e "s/--offload-arch=native/--offload-arch=$(/opt/rocm/llvm/bin/amdgpu-offload-arch)/g" setup.py \
+    && patch /opt/conda/envs/py_3.10/lib/python3.10/site-packages/torch/utils/hipify/hipify_python.py hipify_patch.patch \
+    && python3 setup.py install \
+    && cd ..
 
-# image to run unit testing suite
-FROM dev AS test
+COPY ./ /app/vllm-rocm/
 
-# copy pytorch extensions separately to avoid having to rebuild
-# when python code changes
-COPY --from=build /workspace/vllm/*.so /workspace/vllm/
-COPY tests tests
-COPY vllm vllm
+RUN cd /app \
+    && cd vllm-rocm \
+    && git checkout v0.2.1.post1-rocm \
+    && python3 setup.py install \
+    && cd ..
 
-ENTRYPOINT ["python3", "-m", "pytest", "tests"]
+RUN cd /app \
+    && mkdir dataset \
+    && cd ..
 
-# use CUDA base as CUDA runtime dependencies are already installed via pip
-FROM nvidia/cuda:11.8.0-base-ubuntu22.04 AS vllm-base
+COPY ./benchmark_throughput.sh /app/benchmark_throughput.sh
 
-# libnccl required for ray
-RUN apt-get update -y \
-    && apt-get install -y python3-pip
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install --no-cache-dir ray[all]
 
-WORKDIR /workspace
-COPY requirements.txt requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements.txt
-
-FROM vllm-base AS vllm
-COPY --from=build /workspace/vllm/*.so /workspace/vllm/
-COPY vllm vllm
-
-EXPOSE 8000
-ENTRYPOINT ["python3", "-m", "vllm.entrypoints.api_server"]
-
-# openai api server alternative
-FROM vllm-base AS vllm-openai
-# install additional dependencies for openai api server
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install accelerate fschat
-
-COPY --from=build /workspace/vllm/*.so /workspace/vllm/
-COPY vllm vllm
-
-ENTRYPOINT ["python3", "-m", "vllm.entrypoints.openai.api_server"]
-
+CMD ["/bin/bash"]
