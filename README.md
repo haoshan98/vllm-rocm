@@ -17,7 +17,7 @@ Easy, fast, and cheap LLM serving for everyone
 ---
 
 *Latest News* 🔥
-- [2023/12] Added Mixtral8x7b🚀🚀🚀🚀🚀🚀🚀🚀.
+- [2023/12] Added Mixtral-8x7b🚀🚀🚀🚀🚀🚀🚀🚀.
 - [2023/12] Added ROCm support to vLLM.
 - [2023/10] We hosted [the first vLLM meetup](https://lu.ma/first-vllm-meetup) in SF! Please find the meetup slides [here](https://docs.google.com/presentation/d/1QL-XPFXiFpDBh86DbEegFXBXFXjix4v032GhShbKf3s/edit?usp=sharing).
 - [2023/09] We created our [Discord server](https://discord.gg/jz7wjKhh6g)! Join us to discuss vLLM and LLM serving! We will also post the latest announcements and updates there.
@@ -81,7 +81,7 @@ Visit our [documentation](https://vllm.readthedocs.io/en/latest/) to get started
 - [Quickstart](https://vllm.readthedocs.io/en/latest/getting_started/quickstart.html)
 - [Supported Models](https://vllm.readthedocs.io/en/latest/models/supported_models.html)
 
-## Quick Start to Serve Mixtral8x7b 🚀🚀🚀🚀🚀🚀🚀🚀
+## Quick Start to Serve Mixtral-8x7b 🚀🚀🚀🚀🚀🚀🚀🚀
 ```bash
 python vllm/entrypoints/openai/api_server.py --model=/path/to/DiscoLM-mixtral-8x7b-v2/ --tensor-parallel-size=8 --port=6890
 ```
