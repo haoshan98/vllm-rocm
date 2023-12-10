@@ -17,6 +17,7 @@ Easy, fast, and cheap LLM serving for everyone
 ---
 
 *Latest News* 🔥
+- [2023/12] Added Mixtral8x7b🚀🚀🚀🚀🚀🚀🚀🚀.
 - [2023/12] Added ROCm support to vLLM.
 - [2023/10] We hosted [the first vLLM meetup](https://lu.ma/first-vllm-meetup) in SF! Please find the meetup slides [here](https://docs.google.com/presentation/d/1QL-XPFXiFpDBh86DbEegFXBXFXjix4v032GhShbKf3s/edit?usp=sharing).
 - [2023/09] We created our [Discord server](https://discord.gg/jz7wjKhh6g)! Join us to discuss vLLM and LLM serving! We will also post the latest announcements and updates there.
@@ -60,6 +61,7 @@ vLLM seamlessly supports many Hugging Face models, including the following archi
 - InternLM (`internlm/internlm-7b`, `internlm/internlm-chat-7b`, etc.)
 - LLaMA & LLaMA-2 (`meta-llama/Llama-2-70b-hf`, `lmsys/vicuna-13b-v1.3`, `young-geng/koala`, `openlm-research/open_llama_13b`, etc.)
 - Mistral (`mistralai/Mistral-7B-v0.1`, `mistralai/Mistral-7B-Instruct-v0.1`, etc.)
+- Mixtral (`DiscoResearch/DiscoLM-mixtral-8x7b-v2`, etc.)
 - MPT (`mosaicml/mpt-7b`, `mosaicml/mpt-30b`, etc.)
 - OPT (`facebook/opt-66b`, `facebook/opt-iml-max-30b`, etc.)
 - Phi-1.5 (`microsoft/phi-1_5`, etc.)
@@ -78,6 +80,11 @@ Visit our [documentation](https://vllm.readthedocs.io/en/latest/) to get started
 - [Installation](https://vllm.readthedocs.io/en/latest/getting_started/installation.html)
 - [Quickstart](https://vllm.readthedocs.io/en/latest/getting_started/quickstart.html)
 - [Supported Models](https://vllm.readthedocs.io/en/latest/models/supported_models.html)
+
+## Quick Start to Serve Mixtral8x7b 🚀🚀🚀🚀🚀🚀🚀🚀
+```bash
+python vllm/entrypoints/openai/api_server.py --model=/path/to/DiscoLM-mixtral-8x7b-v2/ --tensor-parallel-size=8 --port=6890
+```
 
 ## Contributing
 
