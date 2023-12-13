@@ -32,31 +32,34 @@ from vllm.model_executor.input_metadata import InputMetadata
 from vllm.model_executor.layers.activation import SiluAndMul
 from vllm.model_executor.layers.attention import PagedAttention
 from vllm.model_executor.layers.layernorm import RMSNorm
-from vllm.model_executor.layers.linear import (LinearMethodBase,
-                                               ColumnParallelLinear,
-                                               MergedColumnParallelLinear,
-                                               QKVParallelLinear,
-                                               RowParallelLinear)
+from vllm.model_executor.layers.linear import (
+    LinearMethodBase,
+    ColumnParallelLinear,
+    MergedColumnParallelLinear,
+    QKVParallelLinear,
+    RowParallelLinear,
+)
 from vllm.model_executor.layers.rotary_embedding import get_rope
 from vllm.model_executor.layers.sampler import Sampler
 from vllm.model_executor.layers.vocab_parallel_embedding import (
-    VocabParallelEmbedding, ParallelLMHead)
+    VocabParallelEmbedding,
+    ParallelLMHead,
+)
 from vllm.model_executor.parallel_utils.parallel_state import (
-    get_tensor_model_parallel_world_size)
+    get_tensor_model_parallel_world_size,
+)
 from vllm.model_executor.sampling_metadata import SamplingMetadata
-from vllm.model_executor.weight_utils import (default_weight_loader,
-                                              hf_model_weights_iterator)
+from vllm.model_executor.weight_utils import (
+    default_weight_loader,
+    hf_model_weights_iterator,
+)
 from vllm.sequence import SamplerOutput
 
 KVCache = Tuple[torch.Tensor, torch.Tensor]
 
 
 class FeedForward(nn.Module):
-    def __init__(
-        self,
-        hidden_size: int,
-        intermediate_size: int
-    ):
+    def __init__(self, hidden_size: int, intermediate_size: int):
         """
         Initialize the FeedForward module.
         Args:
@@ -71,22 +74,15 @@ class FeedForward(nn.Module):
         """
         super().__init__()
 
-        self.w1 = ColumnParallelLinear(
-            hidden_size, intermediate_size, bias=False
-        )
-        self.w2 = RowParallelLinear(
-            intermediate_size, hidden_size, bias=False
-        )
-        self.w3 = ColumnParallelLinear(
-            hidden_size, intermediate_size, bias=False
-        )
+        self.w1 = ColumnParallelLinear(hidden_size, intermediate_size, bias=False)
+        self.w2 = RowParallelLinear(intermediate_size, hidden_size, bias=False)
+        self.w3 = ColumnParallelLinear(hidden_size, intermediate_size, bias=False)
 
     def forward(self, x):
         w1l, _ = self.w1(x)
         w3l, _ = self.w3(x)
         w2l, _ = self.w2(F.silu(w1l) * w3l)
         return w2l
-        
 
 
 class MoE(nn.Module):
@@ -94,42 +90,51 @@ class MoE(nn.Module):
         self,
         hidden_size,
         intermediate_size,
-        num_experts: int = 8,
-        num_experts_per_token: int = 2
+        num_local_experts: int = 8,
+        num_experts_per_tok: int = 2,
     ):
         super().__init__()
-        self.experts = nn.ModuleList([FeedForward(hidden_size, intermediate_size) for i in range(num_experts)])
-        self.gate = nn.Linear(hidden_size, num_experts, bias=False)
-        self.num_experts_per_token = num_experts_per_token
+        self.experts = nn.ModuleList(
+            [
+                FeedForward(hidden_size, intermediate_size)
+                for i in range(num_local_experts)
+            ]
+        )
+        self.gate = nn.Linear(hidden_size, num_local_experts, bias=False)
+        self.num_experts_per_tok = num_experts_per_tok
 
     def forward(self, x):
         orig_shape = x.shape
         x = x.view(-1, x.shape[-1])
 
         scores = self.gate(x)
-        expert_weights, expert_indices = torch.topk(scores, self.num_experts_per_token, dim=-1)
+        expert_weights, expert_indices = torch.topk(
+            scores, self.num_experts_per_tok, dim=-1
+        )
         expert_weights = expert_weights.softmax(dim=-1)
         flat_expert_indices = expert_indices.view(-1)
 
-        x = x.repeat_interleave(self.num_experts_per_token, dim=0)
+        x = x.repeat_interleave(self.num_experts_per_tok, dim=0)
         y = torch.empty_like(x)
         for i, expert in enumerate(self.experts):
             y[flat_expert_indices == i] = expert(x[flat_expert_indices == i])
-        y = (y.view(*expert_weights.shape, -1) * expert_weights.unsqueeze(-1)).sum(dim=1)
+        y = (y.view(*expert_weights.shape, -1) * expert_weights.unsqueeze(-1)).sum(
+            dim=1
+        )
         return y.view(*orig_shape)
 
 
-
 class MistralAttention(nn.Module):
-
-    def __init__(self,
-                 hidden_size: int,
-                 num_heads: int,
-                 num_kv_heads: int,
-                 max_position: int = 4096 * 32,
-                 rope_theta: float = 10000,
-                 linear_method: Optional[LinearMethodBase] = None,
-                 sliding_window: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        hidden_size: int,
+        num_heads: int,
+        num_kv_heads: int,
+        max_position: int = 4096 * 32,
+        rope_theta: float = 10000,
+        linear_method: Optional[LinearMethodBase] = None,
+        sliding_window: Optional[int] = None,
+    ) -> None:
         super().__init__()
         self.hidden_size = hidden_size
         tp_size = get_tensor_model_parallel_world_size()
@@ -174,11 +179,13 @@ class MistralAttention(nn.Module):
             max_position=max_position,
             base=self.rope_theta,
         )
-        self.attn = PagedAttention(self.num_heads,
-                                   self.head_dim,
-                                   self.scaling,
-                                   num_kv_heads=self.num_kv_heads,
-                                   sliding_window=self.sliding_window)
+        self.attn = PagedAttention(
+            self.num_heads,
+            self.head_dim,
+            self.scaling,
+            num_kv_heads=self.num_kv_heads,
+            sliding_window=self.sliding_window,
+        )
 
     def forward(
         self,
@@ -192,14 +199,12 @@ class MistralAttention(nn.Module):
         q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)
         q, k = self.rotary_emb(positions, q, k)
         k_cache, v_cache = kv_cache
-        attn_output = self.attn(q, k, v, k_cache, v_cache, input_metadata,
-                                cache_event)
+        attn_output = self.attn(q, k, v, k_cache, v_cache, input_metadata, cache_event)
         output, _ = self.o_proj(attn_output)
         return output
 
 
 class MixtralDecoderLayer(nn.Module):
-
     def __init__(
         self,
         config: MistralConfig,
@@ -216,17 +221,18 @@ class MixtralDecoderLayer(nn.Module):
             num_kv_heads=config.num_key_value_heads,
             rope_theta=rope_theta,
             linear_method=linear_method,
-            sliding_window=config.sliding_window)
-        self.mlp = MoE(
+            sliding_window=config.sliding_window,
+        )
+        self.block_sparse_moe = MoE(
             hidden_size=self.hidden_size,
             intermediate_size=config.intermediate_size,
-            num_experts=config.num_experts,
-            num_experts_per_token=config.num_experts_per_token
+            num_local_experts=config.num_local_experts,
+            num_experts_per_tok=config.num_experts_per_tok,
         )
-        self.input_layernorm = RMSNorm(config.hidden_size,
-                                       eps=config.rms_norm_eps)
-        self.post_attention_layernorm = RMSNorm(config.hidden_size,
-                                                eps=config.rms_norm_eps)
+        self.input_layernorm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+        self.post_attention_layernorm = RMSNorm(
+            config.hidden_size, eps=config.rms_norm_eps
+        )
 
     def forward(
         self,
@@ -242,8 +248,7 @@ class MixtralDecoderLayer(nn.Module):
             residual = hidden_states
             hidden_states = self.input_layernorm(hidden_states)
         else:
-            hidden_states, residual = self.input_layernorm(
-                hidden_states, residual)
+            hidden_states, residual = self.input_layernorm(hidden_states, residual)
         hidden_states = self.self_attn(
             positions=positions,
             hidden_states=hidden_states,
@@ -253,14 +258,12 @@ class MixtralDecoderLayer(nn.Module):
         )
 
         # Fully Connected
-        hidden_states, residual = self.post_attention_layernorm(
-            hidden_states, residual)
-        hidden_states = self.mlp(hidden_states)
+        hidden_states, residual = self.post_attention_layernorm(hidden_states, residual)
+        hidden_states = self.block_sparse_moe(hidden_states)
         return hidden_states, residual
 
 
 class MixtralModel(nn.Module):
-
     def __init__(
         self,
         config: MistralConfig,
@@ -275,10 +278,12 @@ class MixtralModel(nn.Module):
             config.vocab_size,
             config.hidden_size,
         )
-        self.layers = nn.ModuleList([
-            MixtralDecoderLayer(config, linear_method)
-            for _ in range(config.num_hidden_layers)
-        ])
+        self.layers = nn.ModuleList(
+            [
+                MixtralDecoderLayer(config, linear_method)
+                for _ in range(config.num_hidden_layers)
+            ]
+        )
         self.norm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
 
     def forward(
@@ -307,7 +312,6 @@ class MixtralModel(nn.Module):
 
 
 class MixtralForCausalLM(nn.Module):
-
     def __init__(
         self,
         config: MistralConfig,
@@ -328,8 +332,9 @@ class MixtralForCausalLM(nn.Module):
         input_metadata: InputMetadata,
         cache_events: Optional[List[torch.cuda.Event]],
     ) -> torch.Tensor:
-        hidden_states = self.model(input_ids, positions, kv_caches,
-                                   input_metadata, cache_events)
+        hidden_states = self.model(
+            input_ids, positions, kv_caches, input_metadata, cache_events
+        )
         return hidden_states
 
     def sample(
@@ -337,15 +342,18 @@ class MixtralForCausalLM(nn.Module):
         hidden_states: torch.Tensor,
         sampling_metadata: SamplingMetadata,
     ) -> SamplerOutput:
-        next_tokens = self.sampler(self.lm_head.weight, hidden_states,
-                                   sampling_metadata)
+        next_tokens = self.sampler(
+            self.lm_head.weight, hidden_states, sampling_metadata
+        )
         return next_tokens
 
-    def load_weights(self,
-                     model_name_or_path: str,
-                     cache_dir: Optional[str] = None,
-                     load_format: str = "auto",
-                     revision: Optional[str] = None):
+    def load_weights(
+        self,
+        model_name_or_path: str,
+        cache_dir: Optional[str] = None,
+        load_format: str = "auto",
+        revision: Optional[str] = None,
+    ):
         stacked_params_mapping = [
             # (param_name, shard_name, shard_id)
             ("qkv_proj", "q_proj", "q"),
@@ -356,10 +364,11 @@ class MixtralForCausalLM(nn.Module):
         ]
         params_dict = dict(self.named_parameters())
         for name, loaded_weight in hf_model_weights_iterator(
-                model_name_or_path, cache_dir, load_format, revision):
+            model_name_or_path, cache_dir, load_format, revision
+        ):
             if "rotary_emb.inv_freq" in name:
                 continue
-            for (param_name, weight_name, shard_id) in stacked_params_mapping:
+            for param_name, weight_name, shard_id in stacked_params_mapping:
                 if weight_name not in name:
                     continue
                 param = params_dict[name.replace(weight_name, param_name)]
@@ -368,6 +377,5 @@ class MixtralForCausalLM(nn.Module):
                 break
             else:
                 param = params_dict[name]
-                weight_loader = getattr(param, "weight_loader",
-                                        default_weight_loader)
+                weight_loader = getattr(param, "weight_loader", default_weight_loader)
                 weight_loader(param, loaded_weight)
