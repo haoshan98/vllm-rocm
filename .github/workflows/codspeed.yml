@@ -41,4 +41,4 @@ jobs:
         uses: CodSpeedHQ/action@v2
         with:
           token: ${{ secrets.codspeed_token }}
-          run: "pytest tests/kernels/test_layernorm.py"
+          run: "pytest tests/kernels/test_layernorm.py --codspeed"
