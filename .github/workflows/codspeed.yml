@@ -22,17 +22,9 @@ jobs:
       #  - Install your dependencies
       #  - Build your benchmarks (if using a compiled language)
       # ...
-      - name: Set up Conda
-        uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/setup-python@v3
         with:
-          auto-update-conda: false
-          miniconda-version: latest
-
-      - name: Create Conda environment
-        run: conda env create -n bchmark 
-
-      - name: Activate Conda environment
-        run: conda activate bchmark
+          python-version: "3.10"
 
       - name: Install project dependencies
         run: pip install -e . && pip install pytest
