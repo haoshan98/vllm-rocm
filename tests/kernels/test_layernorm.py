@@ -10,6 +10,7 @@ ADD_RESIDUAL = [False, True]
 SEEDS = [0]
 
 
+@pytest.mark.benchmark
 @pytest.mark.parametrize("num_tokens", NUM_TOKENS)
 @pytest.mark.parametrize("hidden_size", HIDDEN_SIZES)
 @pytest.mark.parametrize("add_residual", ADD_RESIDUAL)
