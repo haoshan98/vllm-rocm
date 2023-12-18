@@ -26,6 +26,15 @@ jobs:
         with:
           python-version: "3.10"
 
+      - name: cuda-toolkit
+        uses: Jimver/cuda-toolkit@v0.2.11
+        with:
+          cuda: "12.3.0"
+
+      - run: echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
+      - run: echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
+      - run: nvcc -V  
+
       - name: Install project dependencies
         run: pip install -e . && pip install pytest
 
