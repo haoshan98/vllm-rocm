@@ -15,6 +15,8 @@ jobs:
   benchmarks:
     # runs-on: ubuntu-latest
     runs-on: self-hosted
+    env:
+      CPLUS_INCLUDE_PATH: /home/haoshan/repos_eagi/benchmarking/fork/actions-runner/_work/_tool/Python/3.10.13/x64/include/python3.10
     steps:
       - uses: actions/checkout@v3
 
@@ -26,11 +28,9 @@ jobs:
       # - name: Install env dependencies
       #   run: sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install python3-dev libxml2-dev libxslt-dev
 
-      - run: sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install python3.10-dev
-
       # - run: export C_INCLUDE_PATH=/usr/include/python3.10:$C_INCLUDE_PATH
       # - run: export C_INCLUDE_PATH=/home/haoshan/repos_eagi/benchmarking/fork/actions-runner/_work/_tool/Python/3.10.13/x64/include/python3.10:$C_INCLUDE_PATH
-      - run: export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:/home/haoshan/repos_eagi/benchmarking/fork/actions-runner/_work/_tool/Python/3.10.13/x64/include/python3.10"
+      # - run: export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:/home/haoshan/repos_eagi/benchmarking/fork/actions-runner/_work/_tool/Python/3.10.13/x64/include/python3.10"
 
       - name: Install local version of pytest-codspeed
         run: git clone https://github.com/haoshan98/pytest-codspeed.git && cd pytest-codspeed && pip install . & cd ../
