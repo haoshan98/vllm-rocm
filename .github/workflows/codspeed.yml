@@ -51,11 +51,13 @@ jobs:
       - name: Install project dependencies
         run: pip install -e . && pip install pytest && pip install pytest-codspeed
 
-      - name: Setup codspeed-runner
+      - name: Get codspeed-runner
         run: curl -I -fsSL -w "%{http_code}" -o /dev/null https://github.com/CodSpeedHQ/runner/releases/download/v2.0.2/codspeed-runner-installer.sh
 
-      - name: check
-        run: vim /usr/bin/ldd
+      # - name: check
+      #   run: vim /usr/bin/ldd
+      - name: Install codspeed-runner
+        run: curl -fsSL https://github.com/CodSpeedHQ/runner/releases/download/v2.0.2/codspeed-runner-installer.sh | bash -s -- --quiet
 
       - name: Run benchmarks
         # run: bash codspeed_action.sh
