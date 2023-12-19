@@ -51,8 +51,15 @@ jobs:
       - name: Install project dependencies
         run: pip install -e . && pip install pytest && pip install pytest-codspeed
 
+      - name: Setup codspeed-runner
+        run: curl -I -fsSL -w "%{http_code}" -o /dev/null https://github.com/CodSpeedHQ/runner/releases/download/v2.0.2/codspeed-runner-installer.sh
+
+      - name: check
+        run: vim /usr/bin/ldd
+
       - name: Run benchmarks
-        run: bash codspeed_action.sh
+        # run: bash codspeed_action.sh
+        run: codspeed-runner --token be5d5cd5-e053-4b63-8c53-8c95cc84e907 -- 'pytest tests/kernels/test_layernorm.py --codspeed'
 
       # - name: Run benchmarks
       #   # uses: CodSpeedHQ/action@v2
