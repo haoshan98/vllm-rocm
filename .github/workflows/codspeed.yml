@@ -33,7 +33,7 @@ jobs:
       #   with:
       #     run: pdm run pytest ./kernels/test_layernorm.py --codspeed
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - uses: actions/setup-python@v3
         with:
