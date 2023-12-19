@@ -19,12 +19,12 @@ jobs:
     #   # CPLUS_INCLUDE_PATH: /usr/include/python3.10
     #   CPLUS_INCLUDE_PATH: /home/haoshan/repos_eagi/benchmarking/fork/actions-runner/_work/_tool/Python/3.10.13/x64/include/python3.10
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      # - name: Set up Python 3.10
-      #   uses: actions/setup-python@v3
-      #   with:
-      #     python-version: "3.10"
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
       # # - name: Install env dependencies
       # #   run: sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install python3-dev libxml2-dev libxslt-dev
@@ -33,49 +33,49 @@ jobs:
       # # - run: export C_INCLUDE_PATH=/home/haoshan/repos_eagi/benchmarking/fork/actions-runner/_work/_tool/Python/3.10.13/x64/include/python3.10:$C_INCLUDE_PATH
       # # - run: export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:/home/haoshan/repos_eagi/benchmarking/fork/actions-runner/_work/_tool/Python/3.10.13/x64/include/python3.10"
 
-      # - name: Set up Python environment
-      #   uses: conda-incubator/setup-miniconda@v2
-      #   with:
-      #     conda-version: 'latest'
-      #     python-version: '3.10'
+      # # - name: Set up Python environment
+      # #   uses: conda-incubator/setup-miniconda@v2
+      # #   with:
+      # #     conda-version: 'latest'
+      # #     python-version: '3.10'
 
-      # - name: Create Conda environment
-      #   run: conda create --name benchmark python=3.10
+      # # - name: Create Conda environment
+      # #   run: conda create --name benchmark python=3.10
 
-      # # - name: Activate Conda environment
-      # #   run: conda init bash && source ~/.bashrc && conda activate benchmark
+      # # # - name: Activate Conda environment
+      # # #   run: conda init bash && source ~/.bashrc && conda activate benchmark
 
-      # - run: conda init bash
-      # - run: source ~/.bashrc
-      # - run: conda activate benchmark
+      # # - run: conda init bash
+      # # - run: source ~/.bashrc
+      # # - run: conda activate benchmark
 
-      # - name: Initialize Conda
-      #   shell: bash -l {0}
-      #   run: |
-      #     source /home/haoshan/miniconda3/bin/activate
-      #     conda init bash
+      # # - name: Initialize Conda
+      # #   shell: bash -l {0}
+      # #   run: |
+      # #     source /home/haoshan/miniconda3/bin/activate
+      # #     conda init bash
 
-      # - name: Setup Conda environment
-      #   shell: bash -l {0}
-      #   run: |
-      #     conda create --name benchmark python=3.10 
-      #     source /home/haoshan/miniconda3/etc/profile.d/conda.sh
-      #     conda activate benchmark
+      # # - name: Setup Conda environment
+      # #   shell: bash -l {0}
+      # #   run: |
+      # #     conda create --name benchmark python=3.10 
+      # #     source /home/haoshan/miniconda3/etc/profile.d/conda.sh
+      # #     conda activate benchmark
 
-      - run: source /home/haoshan/miniconda3/etc/profile.d/conda.sh
-      - run: source activate benchmark
+      # - run: source /home/haoshan/miniconda3/etc/profile.d/conda.sh
+      # - run: source activate benchmark
 
       - name: Install local version of pytest-codspeed
         run: git clone https://github.com/haoshan98/pytest-codspeed.git && cd pytest-codspeed && pip install -e . & cd ../
 
-      # - name: Install project dependencies
-      #   run: pip install -e .
+      - name: Install project dependencies
+        run: pip install -e .
         
-      # - name: Run benchmarks
-      #   uses: CodSpeedHQ/action@main
-      #   with:
-      #     token: ${{ secrets.CODSPEED_TOKEN }}
-      #     run: pytest tests/kernels/test_layernorm.py --codspeed
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@main
+        with:
+          token: ${{ secrets.CODSPEED_TOKEN }}
+          run: pytest tests/kernels/test_layernorm.py --codspeed
 
 
 
