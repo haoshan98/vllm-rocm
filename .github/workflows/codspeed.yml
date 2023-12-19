@@ -63,7 +63,7 @@ jobs:
       #     conda activate benchmark
 
       - run: source /home/haoshan/miniconda3/etc/profile.d/conda.sh
-      - run: conda activate benchmark
+      - run: source activate benchmark
 
       - name: Install local version of pytest-codspeed
         run: git clone https://github.com/haoshan98/pytest-codspeed.git && cd pytest-codspeed && pip install -e . & cd ../
