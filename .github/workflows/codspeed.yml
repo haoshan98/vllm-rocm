@@ -60,10 +60,10 @@ jobs:
         run: |
           conda create --name benchmark python=3.10 
           source /home/haoshan/miniconda3/etc/profile.d/conda.sh
-          conda  activate benchmark
+          conda activate benchmark
 
-      # - name: Install local version of pytest-codspeed
-      #   run: git clone https://github.com/haoshan98/pytest-codspeed.git && cd pytest-codspeed && pip install -e . & cd ../
+      - name: Install local version of pytest-codspeed
+        run: git clone https://github.com/haoshan98/pytest-codspeed.git && cd pytest-codspeed && pip install -e . & cd ../
 
       # - name: Install project dependencies
       #   run: pip install -e .
