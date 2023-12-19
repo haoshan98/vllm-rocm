@@ -16,64 +16,85 @@ jobs:
     # runs-on: ubuntu-latest
     runs-on: self-hosted
     steps:
-      # - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      # - uses: pdm-project/setup-pdm@v3
-      #   with:
-      #     python-version: "3.10"
-      #     cache: true
-
-      # - name: install deps
-      #   run: |
-      #     pdm venv create --with-pip --force $PYTHON
-      #     pdm install -G testing -G testing-extra -G email
-
-      # - name: Run CodSpeed benchmarks
-      #   uses: CodSpeedHQ/action@v2
-      #   with:
-      #     run: pdm run pytest ./kernels/test_layernorm.py --codspeed
-
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v3
         with:
-          python-version: "3.10"
-
-      # - name: cuda-toolkit
-      #   uses: Jimver/cuda-toolkit@v0.2.11
-      #   with:
-      #     cuda: "12.1.0"
-
-      # - run: echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
-      # - run: echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
-      # - run: nvcc -V
+          python-version: "3.12.0-beta.3"
 
       - name: Install project dependencies
-        run: pip install -e . && pip install pytest && pip install pytest-codspeed
+        run: pip install -e .
 
-      - name: Get codspeed-runner
-        run: curl -I -fsSL -w "%{http_code}" -o /dev/null https://github.com/CodSpeedHQ/runner/releases/download/v2.0.2/codspeed-runner-installer.sh
-
-      # - name: check
-      #   run: vim /usr/bin/ldd
-      - name: Install codspeed-runner
-        run: curl -fsSL https://github.com/CodSpeedHQ/runner/releases/download/v2.0.2/codspeed-runner-installer.sh | bash -s -- --quiet
-
-      - name: Activate codspeed-runner
-        run: source "$HOME/.cargo/env"
-
-      - name: Run pytest
-        # run: bash codspeed_action.sh
-        run: pytest tests/kernels/test_layernorm.py --codspeed
-
+      - name: Install local version of pytest-codspeed
+        run: git clone https://github.com/haoshan98/pytest-codspeed.git && cd pytest-codspeed && pip install .
+        
       - name: Run benchmarks
-        # run: bash codspeed_action.sh
-        run: CODSPEED_LOG=debug codspeed-runner --token be5d5cd5-e053-4b63-8c53-8c95cc84e907 -- 'pytest tests/kernels/test_layernorm.py --codspeed'
+        uses: CodSpeedHQ/action@main
+        with:
+          token: ${{ secrets.CODSPEED_TOKEN }}
+          run: pytest tests/kernels/test_layernorm.py --codspeed
+
+
+
+      # # - uses: actions/checkout@v4
+
+      # # - uses: pdm-project/setup-pdm@v3
+      # #   with:
+      # #     python-version: "3.10"
+      # #     cache: true
+
+      # # - name: install deps
+      # #   run: |
+      # #     pdm venv create --with-pip --force $PYTHON
+      # #     pdm install -G testing -G testing-extra -G email
+
+      # # - name: Run CodSpeed benchmarks
+      # #   uses: CodSpeedHQ/action@v2
+      # #   with:
+      # #     run: pdm run pytest ./kernels/test_layernorm.py --codspeed
+
+      # - uses: actions/checkout@v4
+
+      # - uses: actions/setup-python@v4
+      #   with:
+      #     python-version: "3.10"
+
+      # # - name: cuda-toolkit
+      # #   uses: Jimver/cuda-toolkit@v0.2.11
+      # #   with:
+      # #     cuda: "12.1.0"
+
+      # # - run: echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
+      # # - run: echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
+      # # - run: nvcc -V
+
+      # - name: Install project dependencies
+      #   run: pip install -e . && pip install pytest && pip install pytest-codspeed
+
+      # - name: Get codspeed-runner
+      #   run: curl -I -fsSL -w "%{http_code}" -o /dev/null https://github.com/CodSpeedHQ/runner/releases/download/v2.0.2/codspeed-runner-installer.sh
+
+      # # - name: check
+      # #   run: vim /usr/bin/ldd
+      # - name: Install codspeed-runner
+      #   run: curl -fsSL https://github.com/CodSpeedHQ/runner/releases/download/v2.0.2/codspeed-runner-installer.sh | bash -s -- --quiet
+
+      # - name: Activate codspeed-runner
+      #   run: source "$HOME/.cargo/env"
+
+      # - name: Run pytest
+      #   # run: bash codspeed_action.sh
+      #   run: pytest tests/kernels/test_layernorm.py --codspeed
 
       # - name: Run benchmarks
-      #   # uses: CodSpeedHQ/action@v2
-      #   uses: CodSpeedHQ/action@v2.0.2
-      #   # uses: CodSpeedHQ/action@v1
-      #   with:
-      #     token: ${{ secrets.CODSPEED_TOKEN }}
-      #     run: pytest tests/kernels/test_layernorm.py --codspeed
+      #   # run: bash codspeed_action.sh
+      #   run: CODSPEED_LOG=debug codspeed-runner --token be5d5cd5-e053-4b63-8c53-8c95cc84e907 -- 'pytest tests/kernels/test_layernorm.py --codspeed'
+
+      # # - name: Run benchmarks
+      # #   # uses: CodSpeedHQ/action@v2
+      # #   uses: CodSpeedHQ/action@v2.0.2
+      # #   # uses: CodSpeedHQ/action@v1
+      # #   with:
+      # #     token: ${{ secrets.CODSPEED_TOKEN }}
+      # #     run: pytest tests/kernels/test_layernorm.py --codspeed
