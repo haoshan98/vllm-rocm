@@ -33,9 +33,9 @@ jobs:
       #   with:
       #     run: pdm run pytest ./kernels/test_layernorm.py --codspeed
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
@@ -52,9 +52,12 @@ jobs:
         run: pip install -e . && pip install pytest && pip install pytest-codspeed
 
       - name: Run benchmarks
-        # uses: CodSpeedHQ/action@v2
-        uses: CodSpeedHQ/action@v2.0.2
-        # uses: CodSpeedHQ/action@v1
-        with:
-          token: ${{ secrets.CODSPEED_TOKEN }}
-          run: pytest tests/kernels/test_layernorm.py --codspeed
+        run: bash codspeed_action.sh
+
+      # - name: Run benchmarks
+      #   # uses: CodSpeedHQ/action@v2
+      #   uses: CodSpeedHQ/action@v2.0.2
+      #   # uses: CodSpeedHQ/action@v1
+      #   with:
+      #     token: ${{ secrets.CODSPEED_TOKEN }}
+      #     run: pytest tests/kernels/test_layernorm.py --codspeed
