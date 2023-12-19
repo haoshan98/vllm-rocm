@@ -4,7 +4,7 @@ on:
   # Run on pushes to the main branch
   push:
     branches:
-      - "master" # or "main"
+      - "main"
   # Run on pull requests
   pull_request:
   # `workflow_dispatch` allows CodSpeed to trigger backtest
@@ -16,32 +16,49 @@ jobs:
     # runs-on: ubuntu-latest
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3
-      # ...
-      # Setup your environment here:
-      #  - Configure your Python/Rust/Node version
-      #  - Install your dependencies
-      #  - Build your benchmarks (if using a compiled language)
-      # ...
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v4
+
+      - uses: pdm-project/setup-pdm@v3
         with:
           python-version: "3.10"
+          cache: true
 
-      # - name: cuda-toolkit
-      #   uses: Jimver/cuda-toolkit@v0.2.11
-      #   with:
-      #     cuda: "12.1.0"
+      - name: install deps
+        run: |
+          pdm venv create --with-pip --force $PYTHON
+          pdm install -G testing -G testing-extra -G email
 
-      # - run: echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
-      # - run: echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
-      # - run: nvcc -V
-
-      - name: Install project dependencies
-        run: pip install -e . && pip install pytest && pip install pytest-codspeed
-
-      - name: Run benchmarks
-        # uses: CodSpeedHQ/action@v2
-        uses: CodSpeedHQ/action@v2.0.0
+      - name: Run CodSpeed benchmarks
+        uses: CodSpeedHQ/action@v2
         with:
-          token: ${{ secrets.CODSPEED_TOKEN }}
-          run: pytest tests/kernels/test_layernorm.py --codspeed
+          run: pdm run pytest ./kernels/test_layernorm.py --codspeed
+
+      # - uses: actions/checkout@v3
+      # # ...
+      # # Setup your environment here:
+      # #  - Configure your Python/Rust/Node version
+      # #  - Install your dependencies
+      # #  - Build your benchmarks (if using a compiled language)
+      # # ...
+      # - uses: actions/setup-python@v3
+      #   with:
+      #     python-version: "3.10"
+
+      # # - name: cuda-toolkit
+      # #   uses: Jimver/cuda-toolkit@v0.2.11
+      # #   with:
+      # #     cuda: "12.1.0"
+
+      # # - run: echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
+      # # - run: echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
+      # # - run: nvcc -V
+
+      # - name: Install project dependencies
+      #   run: pip install -e . && pip install pytest && pip install pytest-codspeed
+
+      # - name: Run benchmarks
+      #   # uses: CodSpeedHQ/action@v2
+      #   uses: CodSpeedHQ/action@v2.0.2
+      #   with:
+      #     token: ${{ secrets.CODSPEED_TOKEN }}
+      #     run: pytest tests/kernels/test_layernorm.py --codspeed
