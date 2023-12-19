@@ -42,8 +42,12 @@ jobs:
       - name: Create Conda environment
         run: conda create --name benchmark python=3.10
 
-      - name: Activate Conda environment
-        run: conda init bash && source ~/.bashrc && conda activate benchmark
+      # - name: Activate Conda environment
+      #   run: conda init bash && source ~/.bashrc && conda activate benchmark
+
+      - run: conda init bash
+      - run: source ~/.bashrc
+      - run: conda activate benchmark
 
       - name: Install local version of pytest-codspeed
         run: git clone https://github.com/haoshan98/pytest-codspeed.git && cd pytest-codspeed && pip install -e . & cd ../
