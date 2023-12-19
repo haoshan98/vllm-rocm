@@ -16,7 +16,8 @@ jobs:
     # runs-on: ubuntu-latest
     runs-on: self-hosted
     env:
-      CPLUS_INCLUDE_PATH: /home/haoshan/repos_eagi/benchmarking/fork/actions-runner/_work/_tool/Python/3.10.13/x64/include/python3.10
+      CPLUS_INCLUDE_PATH: /usr/include/python3.10
+      # CPLUS_INCLUDE_PATH: /home/haoshan/repos_eagi/benchmarking/fork/actions-runner/_work/_tool/Python/3.10.13/x64/include/python3.10
     steps:
       - uses: actions/checkout@v3
 
