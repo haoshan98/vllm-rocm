@@ -12,6 +12,8 @@ if [ -n "" ]; then
   RUNNER_ARGS="$RUNNER_ARGS --upload-url="
 fi
 
+echo "set RUNNER_ARGS"
+
 # Install the CodSpeedHQ/runner
 head_status=$(curl -I -fsSL -w "%{http_code}" -o /dev/null https://github.com/CodSpeedHQ/runner/releases/download/v2.0.2/codspeed-runner-installer.sh)
 if [ "$head_status" -eq 404 ]; then
@@ -20,6 +22,8 @@ if [ "$head_status" -eq 404 ]; then
 else
   curl -fsSL https://github.com/CodSpeedHQ/runner/releases/download/v2.0.2/codspeed-runner-installer.sh | bash -s -- --quiet
 fi
+
+echo "install CodSpeedHQ/runner"
 
 # Run the benchmarks
 codspeed-runner $RUNNER_ARGS -- 'pytest tests/kernels/test_layernorm.py --codspeed'
