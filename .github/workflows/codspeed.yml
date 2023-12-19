@@ -62,6 +62,10 @@ jobs:
       - name: Activate codspeed-runner
         run: source "$HOME/.cargo/env"
 
+      - name: Run pytest
+        # run: bash codspeed_action.sh
+        run: pytest tests/kernels/test_layernorm.py --codspeed
+
       - name: Run benchmarks
         # run: bash codspeed_action.sh
         run: CODSPEED_LOG=debug codspeed-runner --token be5d5cd5-e053-4b63-8c53-8c95cc84e907 -- 'pytest tests/kernels/test_layernorm.py --codspeed'
