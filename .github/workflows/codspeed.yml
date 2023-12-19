@@ -49,17 +49,18 @@ jobs:
       # - run: source ~/.bashrc
       # - run: conda activate benchmark
 
-      - name: Initialize Conda
-        shell: bash -l {0}
-        run: |
-          source /home/haoshan/miniconda3/bin/activate
-          conda init bash
+      # - name: Initialize Conda
+      #   shell: bash -l {0}
+      #   run: |
+      #     source /home/haoshan/miniconda3/bin/activate
+      #     conda init bash
 
       - name: Setup Conda environment
         shell: bash -l {0}
         run: |
           conda create --name benchmark python=3.10 
-          source activate benchmark
+          source /home/haoshan/miniconda3/etc/profile.d/conda.sh
+          conda  activate benchmark
 
       # - name: Install local version of pytest-codspeed
       #   run: git clone https://github.com/haoshan98/pytest-codspeed.git && cd pytest-codspeed && pip install -e . & cd ../
