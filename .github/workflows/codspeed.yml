@@ -34,7 +34,7 @@ jobs:
 
       # - run: echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
       # - run: echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
-      # - run: nvcc -V  
+      # - run: nvcc -V
 
       - name: Install project dependencies
         run: pip install -e . && pip install pytest
@@ -43,4 +43,4 @@ jobs:
         uses: CodSpeedHQ/action@v2
         with:
           token: ${{ secrets.codspeed_token }}
-          run: "pytest tests/kernels/test_layernorm.py --codspeed"
+          run: pytest tests/kernels/test_layernorm.py --codspeed
