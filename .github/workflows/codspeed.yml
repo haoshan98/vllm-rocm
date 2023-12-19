@@ -40,7 +40,8 @@ jobs:
         run: pip install -e . && pip install pytest && pip install pytest-codspeed
 
       - name: Run benchmarks
-        uses: CodSpeedHQ/action@v2
+        # uses: CodSpeedHQ/action@v2
+        uses: CodSpeedHQ/action@main
         with:
           token: ${{ secrets.CODSPEED_TOKEN }}
           run: pytest tests/kernels/test_layernorm.py --codspeed
