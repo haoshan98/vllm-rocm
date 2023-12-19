@@ -41,7 +41,7 @@ jobs:
 
       - name: Run benchmarks
         # uses: CodSpeedHQ/action@v2
-        uses: CodSpeedHQ/action@v2.0.1
+        uses: CodSpeedHQ/action@v2.0.0
         with:
           token: ${{ secrets.CODSPEED_TOKEN }}
           run: pytest tests/kernels/test_layernorm.py --codspeed
