@@ -26,6 +26,8 @@ jobs:
       # - name: Install env dependencies
       #   run: sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install python3-dev libxml2-dev libxslt-dev
 
+      - run: export C_INCLUDE_PATH=/usr/include/python3.10:$C_INCLUDE_PATH
+
       - name: Install local version of pytest-codspeed
         run: git clone https://github.com/haoshan98/pytest-codspeed.git && cd pytest-codspeed && pip install . & cd ../
 
