@@ -22,26 +22,30 @@ def test_rms_norm(
     add_residual: bool,
     dtype: torch.dtype,
     seed: int,
+    benchmark
 ) -> None:
-    torch.random.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
+    def _rms_norm():
+        torch.random.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
 
-    layer = RMSNorm(hidden_size).to(dtype).cuda()
-    layer.weight.data.normal_(mean=1.0, std=0.1)
-    scale = 1 / (2 * hidden_size)
-    x = torch.randn(num_tokens, hidden_size, dtype=dtype, device="cuda")
-    x *= scale
-    residual = torch.randn_like(x) * scale if add_residual else None
+        layer = RMSNorm(hidden_size).to(dtype).cuda()
+        layer.weight.data.normal_(mean=1.0, std=0.1)
+        scale = 1 / (2 * hidden_size)
+        x = torch.randn(num_tokens, hidden_size, dtype=dtype, device="cuda")
+        x *= scale
+        residual = torch.randn_like(x) * scale if add_residual else None
 
-    # NOTE(woosuk): The reference implementation should be executed first
-    # because the custom kernel is in-place.
-    ref_out = layer._forward(x, residual)
-    out = layer(x, residual)
-    # NOTE(woosuk): LayerNorm operators (including RMS) typically have larger
-    # numerical errors than other operators because they involve reductions.
-    # Therefore, we use a larger tolerance.
-    if add_residual:
-        assert torch.allclose(out[0], ref_out[0], atol=1e-2, rtol=1e-2)
-        assert torch.allclose(out[1], ref_out[1], atol=1e-2, rtol=1e-2)
-    else:
-        assert torch.allclose(out, ref_out, atol=1e-2, rtol=1e-2)
+        # NOTE(woosuk): The reference implementation should be executed first
+        # because the custom kernel is in-place.
+        ref_out = layer._forward(x, residual)
+        out = layer(x, residual)
+        # NOTE(woosuk): LayerNorm operators (including RMS) typically have larger
+        # numerical errors than other operators because they involve reductions.
+        # Therefore, we use a larger tolerance.
+        if add_residual:
+            assert torch.allclose(out[0], ref_out[0], atol=1e-2, rtol=1e-2)
+            assert torch.allclose(out[1], ref_out[1], atol=1e-2, rtol=1e-2)
+        else:
+            assert torch.allclose(out, ref_out, atol=1e-2, rtol=1e-2)
+
+    benchmark(_rms_norm)
